@@ -59,6 +59,15 @@ test('REQ-05 findDuplicateSkus returns unique list of SKUs appearing more than o
   expect(duplicates.sort()).toEqual(['A-1', 'B-2'].sort());
 });
 
+
+
+// ---- Security and reliability tests (etapp 1c) ----
+
+
+
+// ---- Performance test (etapp 1b) ----
+// TODO: generate 20 000 items with some duplicates, measure findDuplicateSkus,
+// assert it finishes under 100 ms. See project guide chapter 3.2.
 // ---- Performance test (etapp 1b) ----
 test('Performance: findDuplicateSkus handles 20 000 items in under 100 ms', () => {
   const items = [];
@@ -73,9 +82,8 @@ test('Performance: findDuplicateSkus handles 20 000 items in under 100 ms', () =
   expect(duplicates.length).toBeGreaterThan(0);
   expect(duration).toBeLessThan(100);
 });
-
 // ---- Security and reliability tests (etapp 1c) ----
-
+// TODO: REQ-07 with test.each, REQ-08 original stock unchanged after a failed restock.
 // REQ-07: test.each kasutamine vigaste SKU-de valideerimiseks
 test.each([
   ['invalid_underscore', 'A_1'],
@@ -99,10 +107,3 @@ test('REQ-08 reliability: original stock unchanged after a failed restock', () =
   expect(() => restock(stock, deliveries)).toThrow();
   expect(stock).toEqual({ 'A-1': 10 }); // Originaal ei tohi olla osaliselt muudetud
 });
-
-// ---- Performance test (etapp 1b) ----
-// TODO: generate 20 000 items with some duplicates, measure findDuplicateSkus,
-// assert it finishes under 100 ms. See project guide chapter 3.2.
-
-// ---- Security and reliability tests (etapp 1c) ----
-// TODO: REQ-07 with test.each, REQ-08 original stock unchanged after a failed restock.

@@ -1,100 +1,57 @@
-# Test Cases – inventory.js
+# Test Plan – inventory.js
 
-## Funktsionaalsed testid
+## 1. Test item
 
-### REQ-01 – Olemasoleva SKU koguse suurendamine
+`loeng-1.5-1.6/inventory.js`
 
-Kontrollime, et olemasoleva SKU juurde lisatud kogus suurendab lao kogust.
+## 2. Scope
 
-**Andmed:**
-- stock: `{ "A-1": 5 }`
-- delivery: `{ sku: "A-1", qty: 3 }`
+In scope:
+- REQ-01 – restock adds quantity to an existing SKU
+- REQ-02 – restock returns a new object and original stock is unchanged
+- REQ-03 – restock rejects invalid quantity
+- REQ-04 – pick reduces stock and rejects invalid pick operations
+- REQ-05 – findDuplicateSkus returns each duplicate SKU once
+- REQ-06 – findDuplicateSkus handles 20 000 items in under 100 ms
+- REQ-07 – SKU must be 1–20 characters and contain only letters, digits and dash
+- REQ-08 – failed operations do not modify the original stock
 
-**Oodatav tulemus:**
-`{ "A-1": 8 }`
+Out of scope:
+- User interface testing, databases and external systems, because inventory.js is a standalone module and is tested with unit tests.
 
-### REQ-02 – Algse stock objekti muutmata jätmine
+## 3. Risks
 
-Kontrollime, et `restock` tagastab uue objekti ja algne `stock` jääb muutmata.
+| Risk | Probability (L/M/H) | Impact (L/M/H) | Mitigation (which tests) |
+|---|---|---|---|
+| findDuplicateSkus is O(n²) – large input can make the test too slow | H | H | REQ-06 performance test |
+| pick may modify the original stock object | M | H | REQ-02 and REQ-08 reliability tests |
+| Invalid SKU may be accepted | M | H | REQ-07 security tests |
+| Invalid quantity may be accepted | M | M | REQ-03 functional tests |
 
-**Andmed:**
-- stock: `{ "A-1": 5 }`
-- delivery: `{ sku: "A-1", qty: 3 }`
+## 4. Approach
 
-**Oodatav tulemus:**
-- tulemus on `{ "A-1": 8 }`
-- algne stock jääb `{ "A-1": 5 }`
-- tagastatud objekt ei ole sama objekt mis algne stock.
+Test types: functional, performance, security, reliability, regression.
 
-### REQ-02 – Uue SKU lisamine
+Level: unit. Method: black-box from requirements, white-box for coverage.
 
-Kontrollime, et laos puuduv SKU lisatakse stock objekti.
+Tool: Jest in GitHub Codespaces.
 
-**Andmed:**
-- stock: `{ "A-1": 5 }`
-- delivery: `{ sku: "B-1", qty: 4 }`
+## 5. Exit criteria
 
-**Oodatav tulemus:**
-`{ "A-1": 5, "B-1": 4 }`
+- all 8 REQ covered by at least one test
+- 100 % tests pass
+- branch coverage >= 90 %
+- REQ-06 under 100 ms
+- 0 open review comments of severity High
 
-### REQ-03 – Vigane kogus
+## 6. Environment
 
-Kontrollime, et `restock` ei luba vigast kogust.
+- GitHub Codespaces
+- Node.js
+- Jest
 
-Kontrollime järgmisi väärtusi:
-- `qty = 0`
-- `qty = -1`
-- `qty = 1.5`
+## 7. Roles
 
-**Oodatav tulemus:**
-Kõigil juhtudel visatakse viga.
-
-### REQ-04 – Kauba väljavõtmine laost
-
-Kontrollime, et `pick` vähendab SKU kogust vastavalt soovitud kogusele.
-
-**Andmed:**
-- stock: `{ "A-1": 10 }`
-- sku: `"A-1"`
-- qty: `3`
-
-**Oodatav tulemus:**
-`{ "A-1": 7 }`
-
-### REQ-04 – Tundmatu SKU
-
-Kontrollime, et tundmatu SKU puhul visatakse viga.
-
-**Andmed:**
-- stock: `{ "A-1": 10 }`
-- sku: `"B-1"`
-- qty: `3`
-
-**Oodatav tulemus:**
-Funktsioon viskab vea.
-
-### REQ-04 – Laos ei ole piisavalt kaupa
-
-Kontrollime, et laost ei saa võtta rohkem kaupa kui seal olemas on.
-
-**Andmed:**
-- stock: `{ "A-1": 10 }`
-- sku: `"A-1"`
-- qty: `11`
-
-**Oodatav tulemus:**
-Funktsioon viskab vea.
-
-### REQ-05 – Korduvate SKU-de leidmine
-
-Kontrollime, et `findDuplicateSkus` leiab korduvad SKU-d ja lisab iga SKU tulemusse ainult ühe korra.
-
-**Andmed:**
-```js
-[
-  { sku: "A-1" },
-  { sku: "B-1" },
-  { sku: "A-1" },
-  { sku: "A-1" },
-  { sku: "B-1" }
-]
+`<name>`: tests.  
+`<name>`: documents.  
+Reviewer: team `<X>`.

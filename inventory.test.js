@@ -113,6 +113,29 @@ test('REQ-07 accepts valid SKU', () => {
     .toEqual({ 'ABC-123': 4 });
 });
 
+// ---- Reliability tests (etapp 1c) ----
+
+// REQ-08 failed pick does not modify original stock
+test('REQ-08 failed pick does not modify original stock', () => {
+  const stock = { 'A-1': 10 };
+
+  expect(() => pick(stock, 'A-1', 20)).toThrow();
+
+  expect(stock).toEqual({ 'A-1': 10 });
+});
+
+// REQ-08 failed restock does not modify original stock
+test('REQ-08 failed restock does not modify original stock', () => {
+  const stock = { 'A-1': 10 };
+
+  expect(() => restock(stock, [
+    { sku: 'A-1', qty: 3 },
+    { sku: 'B-1', qty: 0 }
+  ])).toThrow();
+
+  expect(stock).toEqual({ 'A-1': 10 });
+});
+
 // ---- Performance test (etapp 1b) ----
 // TODO: generate 20 000 items with some duplicates, measure findDuplicateSkus,
 // assert it finishes under 100 ms. See project guide chapter 3.2.

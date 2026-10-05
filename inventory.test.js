@@ -135,7 +135,7 @@ test('REQ-08 failed restock does not modify original stock', () => {
 
   expect(stock).toEqual({ 'A-1': 10 });
 });
-
+//hello
 // ---- Performance test (etapp 1b) ----
 // TODO: generate 20 000 items with some duplicates, measure findDuplicateSkus,
 // assert it finishes under 100 ms. See project guide chapter 3.2.

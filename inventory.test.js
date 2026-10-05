@@ -86,6 +86,33 @@ test('REQ-06 findDuplicateSkus handles 20000 items in under 100 ms', () => {
   expect(end - start).toBeLessThan(100);
 });
 
+// ---- Security tests (etapp 1c) ----
+
+// REQ-07 SKU must contain only letters, digits and dash
+test('REQ-07 rejects invalid SKU characters', () => {
+  const stock = { 'A-1': 5 };
+
+  expect(() => pick(stock, 'A_1', 1)).toThrow();
+  expect(() => pick(stock, 'A 1', 1)).toThrow();
+  expect(() => pick(stock, 'A-1!', 1)).toThrow();
+});
+
+// REQ-07 SKU must be 1-20 characters
+test('REQ-07 rejects SKU with invalid length', () => {
+  const stock = { 'A-1': 5 };
+
+  expect(() => pick(stock, '', 1)).toThrow();
+  expect(() => pick(stock, 'A'.repeat(21), 1)).toThrow();
+});
+
+// REQ-07 valid SKU is accepted
+test('REQ-07 accepts valid SKU', () => {
+  const stock = { 'ABC-123': 5 };
+
+  expect(pick(stock, 'ABC-123', 1))
+    .toEqual({ 'ABC-123': 4 });
+});
+
 // ---- Performance test (etapp 1b) ----
 // TODO: generate 20 000 items with some duplicates, measure findDuplicateSkus,
 // assert it finishes under 100 ms. See project guide chapter 3.2.

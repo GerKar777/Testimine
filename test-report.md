@@ -19,9 +19,9 @@ Requirements covered: 8/8 (see traceability below)
 ## 3. Defects
 | ID | Severity | Found by | Status |
 |---|---|---|---|
-| D-01 | High | TC-03 | open |
-| D-02 | High | TC-06 | open |
-| D-03 | Medium | TC-09 | open |
+| D-01 | High | TC-03 | fixed |
+| D-02 | High | TC-06 | fixed |
+| D-03 | Medium | TC-09 | fixed |
 
 ## 4. Not tested / residual risk
 - PUT request with invalid body or unknown id (REQ-API-05 secondary cases)
@@ -29,4 +29,4 @@ Requirements covered: 8/8 (see traceability below)
 - Concurrent requests / database state under high load
 
 ## 5. Recommendation
-Do not release: 3 open defects, 2 of them High. Re-test after fixes are applied.
+Do not release: 3 fixed defects, 2 of them High. Re-test after fixes are applied.

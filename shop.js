@@ -29,7 +29,7 @@ const money = (n) => n.toFixed(2) + ' €';
 
 function renderProducts() {
   const q = $('#search').value;
-  const visible = PRODUCTS.filter((p) => p.name.includes(q));       
+  const visible = PRODUCTS.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));       
   $('#product-grid').innerHTML = visible.map((p) => `
     <article class="card" data-testid="product" data-id="${p.id}">
       <h3>${p.name}</h3>
@@ -47,7 +47,7 @@ function renderCart() {
     $('#cart-body').innerHTML = '<p class="empty" data-testid="cart-empty">Your cart is empty</p>';
     return;
   }
-  const total = rows.reduce((s, r) => s + r.p.price, 0);                
+  const total = rows.reduce((s, r) => s + r.p.price * r.qty, 0);                
   $('#cart-body').innerHTML = `
     <table aria-label="Cart items">
       <thead><tr><th>Product</th><th>Price</th><th>Qty</th><th>Line total</th><th></th></tr></thead>
@@ -78,7 +78,7 @@ function validate(form) {
   const email = form.email.value.trim();
   const address = form.address.value.trim();
   if (name.length < 2) errors.name = 'Enter your full name';
-  if (!email.includes('@')) errors.email = 'Enter a valid email address';   
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Enter a valid email address';   
   if (!address) errors.address = 'Enter a delivery address';
   return errors;
 }

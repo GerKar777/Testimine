@@ -1,3 +1,4 @@
+import { ShopPage } from './shop.page';
 import { test, expect } from '@playwright/test';
 
 // Every test starts on a fresh page: the app keeps its state in memory,
@@ -6,34 +7,35 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-// UI-01 
+// UI-01 · the products page loads with all 6 products
 test('UI-01 products page shows 6 products', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Products' })).toBeVisible();   // 1. we are on the right page
   await expect(page.getByTestId('product')).toHaveCount(6);                      // 2. all products rendered
   await expect(page.getByTestId('result-count')).toHaveText('6 products');       // 3. counter matches
 });
 
-// UI-02 
+
+// UI-02
 test('UI-02 search "Mouse" shows only the mouse', async ({ page }) => {
   await page.getByRole('searchbox', { name: 'Search products' }).fill('Mouse');
   await expect(page.getByTestId('product')).toHaveCount(1);
   await expect(page.getByTestId('product')).toContainText('Wireless Mouse');
 });
 
-// UI-03 
+// UI-03
 test('UI-03 search "mouse" (lower case) also finds the mouse', async ({ page }) => {
   await page.getByRole('searchbox', { name: 'Search products' }).fill('mouse');
   await expect(page.getByTestId('product')).toHaveCount(1);
   await expect(page.getByTestId('product')).toContainText('Wireless Mouse');
 });
 
-// UI-04 
+// UI-04
 test('UI-04 adding a product increases the cart badge to 1', async ({ page }) => {
   await page.getByRole('button', { name: 'Add Laptop Stand to cart' }).click();
   await expect(page.getByTestId('cart-count')).toHaveText('1');
 });
 
-// UI-05 
+// UI-05
 test('UI-05 cart shows one row with the correct total', async ({ page }) => {
   await page.getByRole('button', { name: 'Add USB-C Hub to cart' }).click();
   await page.getByRole('link', { name: /Cart/ }).click();
@@ -43,15 +45,18 @@ test('UI-05 cart shows one row with the correct total', async ({ page }) => {
 
 // UI-06 
 test('UI-06 adding the same product twice gives qty 2 and total 78.00 €', async ({ page }) => {
-  await page.getByRole('button', { name: 'Add USB-C Hub to cart' }).click();
-  await page.getByRole('button', { name: 'Add USB-C Hub to cart' }).click();
-  await page.getByRole('link', { name: /Cart/ }).click();
+  const shop = new ShopPage(page);
+  await shop.open();
+  await shop.add('USB-C Hub');
+  await shop.add('USB-C Hub');
+  await shop.openCart();
   await expect(page.getByTestId('qty')).toHaveText('2');
   await expect(page.getByTestId('line-total')).toHaveText('78.00 €');
-  await expect(page.getByTestId('cart-total')).toHaveText('78.00 €');
+  await expect(shop.cartTotal()).toHaveText('78.00 €');
 });
 
-// UI-07 
+
+// UI-07
 test('UI-07 removing the only row shows "Your cart is empty"', async ({ page }) => {
   await page.getByRole('button', { name: 'Add Webcam HD to cart' }).click();
   await page.getByRole('link', { name: /Cart/ }).click();
@@ -60,7 +65,7 @@ test('UI-07 removing the only row shows "Your cart is empty"', async ({ page }) 
   await expect(page.getByTestId('cart-count')).toHaveText('0');
 });
 
-// UI-08 
+// UI-08
 test('UI-08 submitting an empty checkout form shows 3 error messages', async ({ page }) => {
   await page.getByRole('link', { name: /Cart/ }).click();
   await page.getByRole('button', { name: 'Place order' }).click();
@@ -69,7 +74,7 @@ test('UI-08 submitting an empty checkout form shows 3 error messages', async ({ 
   await expect(page.locator('#address-error')).toBeVisible();
 });
 
-// UI-09 
+// UI-09
 test('UI-09 email "mari@" shows an email error', async ({ page }) => {
   await page.getByRole('link', { name: /Cart/ }).click();
   await page.getByLabel('Full name').fill('Mari Maasikas');
@@ -81,12 +86,11 @@ test('UI-09 email "mari@" shows an email error', async ({ page }) => {
 
 // UI-10 
 test('UI-10 valid order shows confirmation and empties the cart', async ({ page }) => {
-  await page.getByRole('button', { name: 'Add Wireless Mouse to cart' }).click();
-  await page.getByRole('link', { name: /Cart/ }).click();
-  await page.getByLabel('Full name').fill('Mari Maasikas');
-  await page.getByLabel('Email').fill('mari@example.com');
-  await page.getByLabel('Delivery address').fill('Pikk 1, Tallinn');
-  await page.getByRole('button', { name: 'Place order' }).click();
-  await expect(page.getByTestId('order-confirmation')).toContainText('Thank you, Mari Maasikas!');
-  await expect(page.getByTestId('cart-count')).toHaveText('0');
+  const shop = new ShopPage(page);
+  await shop.open();
+  await shop.add('Wireless Mouse');
+  await shop.openCart();
+  await shop.checkout('Mari Maasikas', 'mari@example.com', 'Pikk 1, Tallinn');
+  await expect(shop.confirmation()).toContainText('Thank you, Mari Maasikas!');
+  await expect(shop.cartCount()).toHaveText('0');
 });

@@ -11,7 +11,9 @@
     "e2e:ui": "playwright test --ui-port=8080 --ui-host=0.0.0.0",
     "api": "node server.js",
     "test:api": "playwright test --project=api",
-    "report": "playwright show-report --host 0.0.0.0"
+    "report": "playwright show-report --host 0.0.0.0",
+    "shop": "node shop-server.js",
+    "test:ui": "playwright test --project=ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
@@ -20,7 +22,11 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/*.test.js"],
-    "testPathIgnorePatterns": ["/node_modules/"]
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ]
   }
 }

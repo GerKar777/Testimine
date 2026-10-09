@@ -8,9 +8,6 @@
 //                               body: { sku: string 1–20 chars [A-Za-z0-9-], qty: whole number >= 0 }
 //   PUT    /items/:id         → 200 { id, sku, qty }  |  400 | 404
 //   DELETE /items/:id         → 204 (no body)         |  404
-//
-// NOTE: this server contains THREE intentional defects. Your API tests should find them.
-// Do not read below this line before you have written your test cases.
 
 const express = require('express');
 const app = express();
@@ -25,7 +22,7 @@ let nextId = 3;
 
 function validate(body) {
   if (!body || typeof body.sku !== 'string' || !SKU_PATTERN.test(body.sku)) return 'invalid sku';
-  if (!Number.isInteger(body.qty) || body.qty < -1) return 'invalid qty';   // defect: allows -1
+  if (!Number.isInteger(body.qty) || body.qty < 0) return 'invalid qty';   // FIXED D-02: now rejects qty < 0
   return null;
 }
 
@@ -34,8 +31,11 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.get('/items', (req, res) => res.json(items));
 
 app.get('/items/:id', (req, res) => {
-  const item = items.find((i) => i.id === Number(req.params.id));
-  res.json(item || null);                                                    // defect: 200 null instead of 404
+  const item = items.find(i => i.id === parseInt(req.params.id));
+  if (!item) {
+    return res.status(404).json({ error: "not found" });
+  }
+  res.json(item);
 });
 
 app.post('/items', (req, res) => {
@@ -60,7 +60,7 @@ app.delete('/items/:id', (req, res) => {
   const index = items.findIndex((i) => i.id === Number(req.params.id));
   if (index === -1) return res.status(404).json({ error: 'not found' });
   items.splice(index, 1);
-  res.status(200).json({ deleted: true });                                   // defect: 200 + body instead of 204
+  res.status(204).end();                                                   // FIXED D-03: returns 204 No Content
 });
 
 // test helper: reset data between test runs

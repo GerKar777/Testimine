@@ -14,7 +14,11 @@ export default defineConfig({
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['json', { outputFile: 'test-results/results.json' }],
   ],
-  use: { trace: 'on', screenshot: 'only-on-failure' },
+  retries: process.env.CI ? 1 : 0,
+  use: {
+    trace: process.env.CI ? 'on-first-retry' : 'on',
+    screenshot: 'only-on-failure',
+  },
   projects: [
     {
       name: 'api',
@@ -25,6 +29,11 @@ export default defineConfig({
       name: 'ui',
       testMatch: /.*\.ui\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:4000' },
+    },
+    {
+      name: 'mobile',
+      testMatch: /.*\.ui\.spec\.ts/,
+      use: { ...devices['Pixel 7'], baseURL: 'http://localhost:4000' },
     },
     {
       name: 'chromium',

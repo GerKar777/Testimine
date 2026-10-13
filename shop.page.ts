@@ -31,6 +31,39 @@ export class ShopPage {
       .getByTestId('line-total');
   }
 
+  async sortBy(option: 'Name' | 'Price: low to high' | 'Price: high to low') {
+    await this.page.getByRole('combobox', {
+      name: 'Sort by'
+    }).selectOption({ label: option });
+  }
+
+  prices(): Locator {
+    return this.page.getByTestId('price');
+  }
+
+  async setQuantity(name: string, qty: number) {
+    await this.quantity(name).fill(String(qty));
+    await this.quantity(name).blur();
+  }
+
+  async applyDiscount(code: string) {
+    await this.page.getByLabel('Discount code').fill(code);
+    await this.page.getByRole('button', { name: 'Apply' }).click();
+  }
+
+  cartSubtotal(): Locator {
+    return this.page.getByTestId('cart-subtotal');
+  }
+
+  cartDiscount(): Locator {
+    return this.page.getByTestId('cart-discount');
+  }
+
+  discountMessage(): Locator {
+    return this.page.getByTestId('discount-message');
+  }
+
+
   async placeOrder() {
     await this.page.getByRole('button', {
       name: 'Place order'

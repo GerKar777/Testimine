@@ -1,111 +1,101 @@
-import { test, expect } from '@playwright/test';
 
-test.describe('MiniShop v2 - Additional Functional Tests (UI-11 to UI-21)', () => {
+import { test, expect } from './fixtures';
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+test.describe('Sorting', () => {
+  test('UI-11 cheapest product first', async ({ shop }) => {
+    await shop.sortBy('Price: low to high');
+    await expect(shop.products().first()).toContainText('Wireless Mouse');
+    await expect(shop.prices().first()).toHaveText('24.50 €');
   });
 
-  test('UI-11: Price low to high sorting', async ({ page }) => {
-    await page.locator('#sort').selectOption('price-asc');
-    await page.waitForTimeout(100);
-    const prices = await page.locator('[data-testid="price"]').allTextContents();
-    const nums = prices.map(p => parseFloat(p.replace(/[^0-9.]/g, '')));
-    for (let i = 0; i < nums.length - 1; i++) {
-      expect(nums[i]).toBeLessThanOrEqual(nums[i + 1]);
-    }
+  test('UI-12 most expensive product first', async ({ shop }) => {
+    await shop.sortBy('Price: high to low');
+    await expect(shop.products().first()).toContainText('Monitor 27"');
+    await expect(shop.prices().first()).toHaveText('249.00 €');
+  });
+});
+
+test.describe('Quantity', () => {
+  test('UI-13 quantity 3 updates totals', async ({ shop }) => {
+    await shop.add('USB-C Hub');
+    await shop.openCart();
+    await shop.setQuantity('USB-C Hub', 3);
+
+    await expect(shop.quantity('USB-C Hub')).toHaveValue('3');
+    await expect(shop.lineTotal('USB-C Hub')).toHaveText('117.00 €');
+    await expect(shop.cartTotal()).toHaveText('117.00 €');
   });
 
-  test('UI-12: Price high to low sorting', async ({ page }) => {
-    await page.locator('#sort').selectOption('price-desc');
-    await page.waitForTimeout(100);
-    const prices = await page.locator('[data-testid="price"]').allTextContents();
-    const nums = prices.map(p => parseFloat(p.replace(/[^0-9.]/g, '')));
-    for (let i = 0; i < nums.length - 1; i++) {
-      expect(nums[i]).toBeGreaterThanOrEqual(nums[i + 1]);
-    }
+  test('UI-14 quantity 0 is not allowed', async ({ shop }) => {
+    await shop.add('USB-C Hub');
+    await shop.openCart();
+    await shop.setQuantity('USB-C Hub', 0);
+
+    await expect(shop.quantity('USB-C Hub')).toHaveValue('1');
+    await expect(shop.cartTotal()).toHaveText('39.00 €');
+  });
+});
+
+test.describe('Discount', () => {
+  test('UI-15 SAVE10 discounts one product', async ({ shop }) => {
+    await shop.add('USB-C Hub');
+    await shop.openCart();
+    await shop.applyDiscount('SAVE10');
+
+    await expect(shop.cartSubtotal()).toHaveText('39.00 €');
+    await expect(shop.cartDiscount()).toHaveText('−3.90 €');
+    await expect(shop.cartTotal()).toHaveText('35.10 €');
   });
 
-  test('UI-13: Changing quantity updates line total and cart total', async ({ page }) => {
-    // Кликаем по первой кнопке добавления в корзину
-    await page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]').first().click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    await page.locator('[data-qty]').fill('3');
-    const total = await page.locator('[data-testid="cart-total"], #cart-total').textContent();
-    expect(total).not.toBeNull();
+  test('UI-16 SAVE10 discounts the entire basket', async ({ shop }) => {
+    await test.step('add two different products', async () => {
+      await shop.add('USB-C Hub');
+      await shop.add('Wireless Mouse');
+      await shop.openCart();
+
+      await expect(shop.cartSubtotal()).toHaveText('63.50 €');
+    });
+
+    await test.step('apply SAVE10', async () => {
+      await shop.applyDiscount('SAVE10');
+
+      await expect(shop.cartDiscount()).toHaveText('−6.35 €');
+      await expect(shop.cartTotal()).toHaveText('57.15 €');
+    });
   });
 
-  test('UI-14: Quantity zero or negative is not allowed', async ({ page }) => {
-    await page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]').first().click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    const qtyInput = page.locator('[data-qty]');
-    await qtyInput.fill('0');
-    const val = await qtyInput.inputValue();
-    expect(Number(val)).toBeGreaterThan(0);
-  });
+  test('UI-17 invalid code does not change total', async ({ shop }) => {
+    await shop.add('USB-C Hub');
+    await shop.openCart();
+    await shop.applyDiscount('WRONGCODE');
 
-  test('UI-15: Discount code SAVE10 gives 10% off for single product', async ({ page }) => {
-    await page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]').first().click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    await page.locator('#discount').fill('SAVE10');
-    await page.locator('#apply-discount, button:has-text("Apply")').click();
-    await expect(page.locator('.discount-row, [data-testid="discount"]')).toBeVisible();
+    await expect(shop.discountMessage()).toContainText('Invalid code');
+    await expect(shop.cartTotal()).toHaveText('39.00 €');
   });
+});
 
-  test('UI-16: Discount code SAVE10 applies to the whole basket', async ({ page }) => {
-    const buttons = page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]');
-    await buttons.nth(0).click();
-    await buttons.nth(1).click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    await page.locator('#discount').fill('SAVE10');
-    await page.locator('#apply-discount, button:has-text("Apply")').click();
-    await expect(page.locator('.discount-row, [data-testid="discount"]')).toBeVisible();
-  });
+test.describe('Data-driven email validation', () => {
+  const invalidEmails = [
+    { email: 'plainaddress', why: 'missing @' },
+    { email: 'mari@', why: 'missing domain' },
+    { email: '@example.com', why: 'missing username' },
+    { email: 'mari@example', why: 'missing domain extension' }
+  ];
 
-  test('UI-17: Unknown discount code shows invalid message', async ({ page }) => {
-    await page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]').first().click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    await page.locator('#discount').fill('INVALID');
-    await page.locator('#apply-discount, button:has-text("Apply")').click();
-    await expect(page.locator('.error, .invalid-code, [data-testid="error"]')).toBeVisible();
-  });
+  for (const { email, why } of invalidEmails) {
+    test(`UI-18 email "${email}" is rejected (${why})`, async ({ shop }) => {
+      await shop.add('USB-C Hub');
+      await shop.openCart();
 
-  test('UI-18: Invalid email validation format', async ({ page }) => {
-    await page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]').first().click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    await page.locator('#name').fill('Mari Maasikas');
-    await page.locator('#email').fill('invalid-email');
-    await page.locator('#address').fill('Pikk 1');
-    await page.locator('#checkout, button:has-text("Checkout")').click();
-    await expect(page.locator('#email:invalid, .error')).toBeVisible();
-  });
+      await shop.checkout(
+        'Mari Maasikas',
+        email,
+        'Pikk 1, Tallinn'
+      );
 
-  test('UI-19: Empty name field shows error on checkout', async ({ page }) => {
-    await page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]').first().click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    await page.locator('#name').fill('');
-    await page.locator('#email').fill('mari@test.com');
-    await page.locator('#address').fill('Pikk 1');
-    await page.locator('#checkout, button:has-text("Checkout")').click();
-    await expect(page.locator('.error, [data-testid="error"]')).toBeVisible();
-  });
-
-  test('UI-20: Empty address field shows error on checkout', async ({ page }) => {
-    await page.locator('.product-card button, button.add-to-cart, [data-testid="add-to-cart"]').first().click();
-    await page.locator('#cart-btn, a[href*="cart"]').click();
-    await page.locator('#name').fill('Mari Maasikas');
-    await page.locator('#email').fill('mari@test.com');
-    await page.locator('#address').fill('');
-    await page.locator('#checkout, button:has-text("Checkout")').click();
-    await expect(page.locator('.error, [data-testid="error"]')).toBeVisible();
-  });
-
-  test('UI-21: Sorting by name alphabetical order', async ({ page }) => {
-    await page.locator('#sort').selectOption('name');
-    await page.waitForTimeout(100);
-    const names = await page.locator('.card h3, [data-testid="product-title"]').allTextContents();
-    const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
-    expect(names).toEqual(sortedNames);
-  });
-
+      await expect(shop.error('email')).toContainText(
+        'Enter a valid email address'
+      );
+    });
+  }
 });

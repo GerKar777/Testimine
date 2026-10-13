@@ -11,7 +11,7 @@ function isValidPassword(password) {
   if (password.trim().length === 0) {
     return false;
   }
-  return password.length > 8;
+  return password.length >= 8;
 }
 
 module.exports = { isValidPassword };

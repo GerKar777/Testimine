@@ -8,15 +8,11 @@ export class ShopPage {
   }
 
   async search(text: string) {
-    await this.page
-      .getByRole('searchbox', { name: 'Search products' })
-      .fill(text);
+    await this.page.getByRole('searchbox', { name: 'Search products' }).fill(text);
   }
 
   async add(name: string) {
-    await this.page
-      .getByRole('button', { name: `Add ${name} to cart` })
-      .click();
+    await this.page.getByRole('button', { name: `Add ${name} to cart` }).click();
   }
 
   async openCart() {
@@ -24,9 +20,7 @@ export class ShopPage {
   }
 
   async remove(name: string) {
-    await this.page
-      .getByRole('button', { name: `Remove ${name}` })
-      .click();
+    await this.page.getByRole('button', { name: `Remove ${name}` }).click();
   }
 
   async checkout(name: string, email: string, address: string) {
@@ -36,8 +30,16 @@ export class ShopPage {
     await this.page.getByRole('button', { name: 'Place order' }).click();
   }
 
+  async placeOrder() {
+    await this.page.getByRole('button', { name: 'Place order' }).click();
+  }
+
   products(): Locator {
     return this.page.getByTestId('product');
+  }
+
+  prices(): Locator {
+    return this.page.getByTestId('price');
   }
 
   resultCount(): Locator {
@@ -54,6 +56,10 @@ export class ShopPage {
 
   cartTotal(): Locator {
     return this.page.getByTestId('cart-total');
+  }
+
+  cartEmptyMessage(): Locator {
+    return this.page.getByTestId('cart-empty');
   }
 
   confirmation(): Locator {

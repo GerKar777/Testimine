@@ -1,10 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testMatch: '**/*.spec.ts', // Запускать только spec-файлы Playwright!
+  testMatch: '**/*.spec.ts',
+  timeout: 15 * 1000, // 15 секунд на один тест максимум
+  expect: {
+    timeout: 5000,   // 5 секунд на expect
+  },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: 'html',
   use: {
@@ -25,5 +29,6 @@ export default defineConfig({
     command: 'npx http-server . -p 3000',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    timeout: 30 * 1000,
   },
 });

@@ -120,7 +120,7 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => {
   const q = e.target.closest('[data-qty]');
   if (q) {
-    const qty = Number(q.value);
+    const qty = Math.max(1, Math.floor(Number(q.value)) || 1);
     cart.set(Number(q.dataset.qty), qty);
     renderCart();
   }

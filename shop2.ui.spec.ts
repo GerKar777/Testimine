@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test, expect } from '@playwright/test';
 
 const parseMoney = (text: string | null) => Math.abs(parseFloat((text || '0').replace('−', '-').replace(/[^0-9.-]+/g, '')));
 

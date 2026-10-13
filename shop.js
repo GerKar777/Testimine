@@ -1,11 +1,23 @@
-// MiniShop v2 – fully fixed application logic
+// MiniShop v2 – client-side web shop used as the system under test for UI tests.
+// All state lives in memory (reload = fresh start). No backend.
+//
+// Changes in v2 (the developer's release notes):
+//   - "Add to cart" buttons are now labelled "Buy" (accessible name "Buy <product>").
+//   - "Cart" is now "Basket"; on narrow screens only the badge is shown (aria-label "Basket").
+//   - Basket rows have a quantity input (min 1); changing it updates line total and total.
+//   - Sort select on the products page: Name / Price: low to high / Price: high to low.
+//   - Discount code in the basket: SAVE10 gives 10 % off the whole basket; unknown code → "Invalid code".
+//   - v1 defects (search case, total × qty, email format) are fixed.
+//
+// NOTE: v2 contains THREE new intentional defects. Your UI tests should find them.
+
 const PRODUCTS = [
-  { id: 1, name: 'Laptop Stand',        category: 'Accessories', price: 29.90 },
-  { id: 2, name: 'USB-C Hub',           category: 'Accessories', price: 39.00 },
-  { id: 3, name: 'Mechanical Keyboard', category: 'Input',       price: 89.00 },
-  { id: 4, name: 'Wireless Mouse',      category: 'Input',       price: 24.50 },
-  { id: 5, name: 'Monitor 27"',         category: 'Displays',    price: 249.00 },
-  { id: 6, name: 'Webcam HD',           category: 'Video',       price: 54.90 },
+  { id: 1, name: 'Laptop Stand', category: 'Accessories', price: 29.90 },
+  { id: 2, name: 'USB-C Hub', category: 'Accessories', price: 39.00 },
+  { id: 3, name: 'Mechanical Keyboard', category: 'Input', price: 89.00 },
+  { id: 4, name: 'Wireless Mouse', category: 'Input', price: 24.50 },
+  { id: 5, name: 'Monitor 27"', category: 'Displays', price: 249.00 },
+  { id: 6, name: 'Webcam HD', category: 'Video', price: 54.90 },
 ];
 const DISCOUNTS = { SAVE10: 0.10 };
 
@@ -16,14 +28,25 @@ let orderNo = 1000;
 const $ = (sel) => document.querySelector(sel);
 const money = (n) => n.toFixed(2) + ' €';
 
+
 function sortProducts(list, mode) {
   const copy = [...list];
-  // FIXED D-04: Numerical sorting instead of alphabetical string comparison
-  if (mode === 'price-asc') copy.sort((a, b) => a.price - b.price);  
-  if (mode === 'price-desc') copy.sort((a, b) => b.price - a.price);  
-  if (mode === 'name') copy.sort((a, b) => a.name.localeCompare(b.name));
+
+  if (mode === 'price-asc') {
+    copy.sort((a, b) => a.price - b.price);
+  }
+
+  if (mode === 'price-desc') {
+    copy.sort((a, b) => b.price - a.price);
+  }
+
+  if (mode === 'name') {
+    copy.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   return copy;
 }
+
 
 function renderProducts() {
   const q = $('#search').value.toLowerCase();
@@ -46,8 +69,8 @@ function renderCart() {
     return;
   }
   const subtotal = rows.reduce((s, r) => s + r.p.price * r.qty, 0);
-  // FIXED D-05: Discount applied to the entire subtotal, not just the first row
-  const discount = subtotal * discountRate;   
+  const discount = subtotal * discountRate;
+
   const total = subtotal - discount;
   $('#cart-body').innerHTML = `
     <table aria-label="Basket items">
@@ -97,9 +120,7 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => {
   const q = e.target.closest('[data-qty]');
   if (q) {
-    let qty = Number(q.value);
-    // FIXED D-06: Prevent zero or negative quantities
-    if (isNaN(qty) || qty < 1) qty = 1;                             
+    const qty = Math.max(1, Math.floor(Number(q.value)) || 1);
     cart.set(Number(q.dataset.qty), qty);
     renderCart();
   }
@@ -130,7 +151,7 @@ $('#checkout').addEventListener('submit', (e) => {
     orderNo += 1;
     cart.clear(); discountRate = 0; renderCart(); form.reset();
     $('#order-result').innerHTML = `<div class="alert" role="status" data-testid="order-confirmation">Thank you, ${name}! Order #${orderNo} confirmed.</div>`;
-  }, 300 + Math.random() * 900);
+  }, 300 + Math.random() * 900);   // the "server" takes 0.3–1.2 s – tests must wait for the result, not sleep
 });
 
 renderProducts();

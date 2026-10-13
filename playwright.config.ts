@@ -1,34 +1,75 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const ci = (globalThis as typeof globalThis & {
+  process?: { env?: { CI?: string } };
+}).process?.env?.CI;
+
 export default defineConfig({
-  testMatch: '**/*.spec.ts',
-  timeout: 15 * 1000, // 15 секунд на один тест максимум
-  expect: {
-    timeout: 5000,   // 5 секунд на expect
-  },
-  fullyParallel: false,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  workers: 1,
-  reporter: 'html',
+  testDir: '.',
+  testMatch: /.*\.spec\.ts/,
+
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ['json', { outputFile: 'test-results/results.json' }],
+  ],
+
+  // Retry failed tests once in GitHub Actions
+  retries: ci ? 1 : 0,
+
   use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
+    trace: ci ? 'on-first-retry' : 'on',
+    screenshot: 'only-on-failure',
   },
+
   projects: [
     {
-      name: 'ui',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'api',
+      testMatch: /.*\.api\.spec\.ts/,
+      use: {
+        baseURL: 'http://localhost:3000',
+      },
     },
+
+    {
+      name: 'ui',
+      testMatch: /.*\.ui\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:4000',
+      },
+    },
+
     {
       name: 'mobile',
-      use: { ...devices['Pixel 7'] },
+      testMatch: /.*\.ui\.spec\.ts/,
+      use: {
+        ...devices['Pixel 7'],
+        baseURL: 'http://localhost:4000',
+      },
+    },
+
+    {
+      name: 'chromium',
+      testIgnore: /.*\.(api|ui)\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'https://demo.playwright.dev',
+      },
     },
   ],
-  webServer: {
-    command: 'npx http-server . -p 3000',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30 * 1000,
-  },
+
+  webServer: [
+    {
+      command: 'node server.js',
+      url: 'http://localhost:3000/health',
+      reuseExistingServer: !ci,
+    },
+    {
+      command: 'node shop-server.js',
+      url: 'http://localhost:4000/health',
+      reuseExistingServer: !ci,
+    },
+  ],
 });

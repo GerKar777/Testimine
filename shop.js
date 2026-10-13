@@ -69,7 +69,8 @@ function renderCart() {
     return;
   }
   const subtotal = rows.reduce((s, r) => s + r.p.price * r.qty, 0);
-  const discount = rows.length ? rows[0].p.price * rows[0].qty * discountRate : 0;
+  const discount = subtotal * discountRate;
+
   const total = subtotal - discount;
   $('#cart-body').innerHTML = `
     <table aria-label="Basket items">

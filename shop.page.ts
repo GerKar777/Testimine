@@ -1,7 +1,41 @@
 import { Page, Locator } from '@playwright/test';
 
 export class ShopPage {
-  constructor(private page: Page) {}
+  constructor(private page: Page) { }
+
+  productHeading(): Locator {
+    return this.page.getByRole('heading', { name: 'Products' });
+  }
+
+  resultCount(): Locator {
+    return this.page.getByTestId('result-count');
+  }
+
+  cartRows(): Locator {
+    return this.page.getByTestId('cart-row');
+  }
+
+  cartEmpty(): Locator {
+    return this.page.getByTestId('cart-empty');
+  }
+
+  quantity(name: string): Locator {
+    return this.page.getByRole('spinbutton', {
+      name: `Quantity for ${name}`
+    });
+  }
+
+  lineTotal(name: string): Locator {
+    return this.cartRows()
+      .filter({ hasText: name })
+      .getByTestId('line-total');
+  }
+
+  async placeOrder() {
+    await this.page.getByRole('button', {
+      name: 'Place order'
+    }).click();
+  }
 
   async open() {
     await this.page.goto('/');
@@ -12,11 +46,15 @@ export class ShopPage {
   }
 
   async add(name: string) {
-    await this.page.getByRole('button', { name: `Add ${name} to cart` }).click();
+    await this.page.getByRole('button', {
+      name: `Buy ${name}`
+    }).click();
   }
 
   async openCart() {
-    await this.page.getByRole('link', { name: /Cart/ }).click();
+    await this.page.getByRole('link', {
+      name: 'Basket'
+    }).click();
   }
 
   async remove(name: string) {

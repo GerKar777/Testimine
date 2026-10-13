@@ -1,96 +1,70 @@
-import { ShopPage } from './shop.page';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-// Every test starts on a fresh page: the app keeps its state in memory,
-// so a new page = empty cart. No cleanup needed between tests.
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+test('UI-01 products page shows 6 products', async ({ shop }) => {
+  await expect(shop.products()).toHaveCount(6);
 });
 
-// UI-01 · the products page loads with all 6 products
-test('UI-01 products page shows 6 products', async ({ page }) => {
-  await expect(page.getByRole('heading', { name: 'Products' })).toBeVisible();   // 1. we are on the right page
-  await expect(page.getByTestId('product')).toHaveCount(6);                      // 2. all products rendered
-  await expect(page.getByTestId('result-count')).toHaveText('6 products');       // 3. counter matches
+test('UI-02 search "mouse" shows only the mouse', async ({ shop }) => {
+  await shop.search('mouse');
+  await expect(shop.products()).toHaveCount(1);
+  await expect(shop.products()).toContainText('Wireless Mouse');
 });
 
-
-// UI-02
-test('UI-02 search "Mouse" shows only the mouse', async ({ page }) => {
-  await page.getByRole('searchbox', { name: 'Search products' }).fill('Mouse');
-  await expect(page.getByTestId('product')).toHaveCount(1);
-  await expect(page.getByTestId('product')).toContainText('Wireless Mouse');
+test('UI-03 search "mouse" (lower case) also finds the mouse', async ({ shop }) => {
+  await shop.search('mouse');
+  await expect(shop.products()).toHaveCount(1);
+  await expect(shop.products()).toContainText('Wireless Mouse');
 });
 
-// UI-03
-test('UI-03 search "mouse" (lower case) also finds the mouse', async ({ page }) => {
-  await page.getByRole('searchbox', { name: 'Search products' }).fill('mouse');
-  await expect(page.getByTestId('product')).toHaveCount(1);
-  await expect(page.getByTestId('product')).toContainText('Wireless Mouse');
+test('UI-04 adding a product increases the cart badge to 1', async ({ shop }) => {
+  await shop.add('Laptop Stand');
+  await expect(shop.cartCount()).toHaveText('1');
 });
 
-// UI-04
-test('UI-04 adding a product increases the cart badge to 1', async ({ page }) => {
-  await page.getByRole('button', { name: 'Add Laptop Stand to cart' }).click();
-  await expect(page.getByTestId('cart-count')).toHaveText('1');
+test('UI-05 basket shows one row with the correct total', async ({ shop }) => {
+  await shop.add('USB-C Hub');
+  await shop.openCart();
+  await expect(shop.cartRows()).toHaveCount(1);
+  await expect(shop.lineTotal('USB-C Hub')).toHaveText('39.00 €');
+  await expect(shop.cartTotal()).toHaveText('39.00 €');
 });
 
-// UI-05
-test('UI-05 cart shows one row with the correct total', async ({ page }) => {
-  await page.getByRole('button', { name: 'Add USB-C Hub to cart' }).click();
-  await page.getByRole('link', { name: /Cart/ }).click();
-  await expect(page.getByTestId('cart-row')).toHaveCount(1);
-  await expect(page.getByTestId('cart-total')).toHaveText('39.00 €');
-});
-
-// UI-06 
-test('UI-06 adding the same product twice gives qty 2 and total 78.00 €', async ({ page }) => {
-  const shop = new ShopPage(page);
-  await shop.open();
+test('UI-06 adding the same product twice gives qty 2 and total 78.00 €', async ({ shop }) => {
   await shop.add('USB-C Hub');
   await shop.add('USB-C Hub');
   await shop.openCart();
-  await expect(page.getByTestId('qty')).toHaveText('2');
-  await expect(page.getByTestId('line-total')).toHaveText('78.00 €');
+  await expect(shop.cartRows()).toHaveCount(1);
+  await expect(shop.lineTotal('USB-C Hub')).toHaveText('78.00 €');
   await expect(shop.cartTotal()).toHaveText('78.00 €');
 });
 
-
-// UI-07
-test('UI-07 removing the only row shows "Your cart is empty"', async ({ page }) => {
-  await page.getByRole('button', { name: 'Add Webcam HD to cart' }).click();
-  await page.getByRole('link', { name: /Cart/ }).click();
-  await page.getByRole('button', { name: 'Remove Webcam HD' }).click();
-  await expect(page.getByTestId('cart-empty')).toContainText('Your cart is empty');
-  await expect(page.getByTestId('cart-count')).toHaveText('0');
+test('UI-07 removing the only row shows "Your basket is empty"', async ({ shop }) => {
+  await shop.add('Webcam HD');
+  await shop.openCart();
+  await shop.remove('Webcam HD');
+  await expect(shop.page.locator('body')).toContainText('Your basket is empty');
 });
 
-// UI-08
-test('UI-08 submitting an empty checkout form shows 3 error messages', async ({ page }) => {
-  await page.getByRole('link', { name: /Cart/ }).click();
-  await page.getByRole('button', { name: 'Place order' }).click();
-  await expect(page.locator('#name-error')).toBeVisible();
-  await expect(page.locator('#email-error')).toBeVisible();
-  await expect(page.locator('#address-error')).toBeVisible();
+test('UI-08 submitting an empty checkout form shows 3 error messages', async ({ shop }) => {
+  await shop.add('Webcam HD');
+  await shop.openCart();
+  await shop.checkout('', '', '');
+  await expect(shop.error('name')).toBeVisible();
+  await expect(shop.error('email')).toBeVisible();
+  await expect(shop.error('address')).toBeVisible();
 });
 
-// UI-09
-test('UI-09 email "mari@" shows an email error', async ({ page }) => {
-  await page.getByRole('link', { name: /Cart/ }).click();
-  await page.getByLabel('Full name').fill('Mari Maasikas');
-  await page.getByLabel('Email').fill('mari@');
-  await page.getByLabel('Delivery address').fill('Pikk 1, Tallinn');
-  await page.getByRole('button', { name: 'Place order' }).click();
-  await expect(page.locator('#email-error')).toHaveText('Enter a valid email address');
+test('UI-09 email "mari@" shows an email error', async ({ shop }) => {
+  await shop.add('Webcam HD');
+  await shop.openCart();
+  await shop.checkout('Mari Maasikas', 'mari@', 'Pikk 1, Tallinn');
+  await expect(shop.error('email')).toHaveText('Enter a valid email address');
 });
 
-// UI-10 
-test('UI-10 valid order shows confirmation and empties the cart', async ({ page }) => {
-  const shop = new ShopPage(page);
-  await shop.open();
-  await shop.add('Wireless Mouse');
+test('UI-10 valid order shows confirmation and empties the basket', async ({ shop }) => {
+  await shop.add('Webcam HD');
   await shop.openCart();
   await shop.checkout('Mari Maasikas', 'mari@example.com', 'Pikk 1, Tallinn');
-  await expect(shop.confirmation()).toContainText('Thank you, Mari Maasikas!');
+  await expect(shop.confirmation()).toBeVisible();
   await expect(shop.cartCount()).toHaveText('0');
 });

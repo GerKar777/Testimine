@@ -23,8 +23,33 @@ After the fix, the test was run six times again. Result: fill in the actual resu
 
 ## 4. Screenshots
 
-1. [ВСТАВИТЬ СКРИНШОТ: 6 запусков до исправления — 1 правильный и 5 неправильных.]
-2. [ВСТАВИТЬ СКРИНШОТ: 6 запусков после исправления — 6 правильных.]
-3. [ВСТАВИТЬ СКРИНШОТ: результаты тестов на компьютере и телефоне.]
-4. [ВСТАВИТЬ СКРИНШОТ: HTML test report.]
+### 4.1 Flaky test before the fix
+
+**Сюда вставить скриншот: 1 правильный и 5 неправильных запусков.**
+
+![Flaky test before fix](screenshots/flaky-before.png)
+
+### 4.2 Flaky test after the fix
+
+**Сюда вставить скриншот: 6 правильных запусков из 6.**
+
+![Flaky test after fix](screenshots/flaky-after.png)
+
+### 4.3 UI and mobile tests
+
+**Сюда вставить скриншот: 22 правильных теста из 22.**
+
+![UI and mobile tests](screenshots/ui-mobile.png)
+
+### 4.4 Jest tests
+
+**Сюда вставить скриншот: 9 правильных тестов из 9.**
+
+![Jest tests](screenshots/jest.png)
+
+### 4.5 Playwright HTML report
+
+**Сюда вставить скриншот HTML-отчёта Playwright.**
+
+![Playwright HTML report](screenshots/playwright-report.png)
 

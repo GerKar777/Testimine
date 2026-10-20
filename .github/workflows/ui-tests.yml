@@ -1,5 +1,8 @@
+ tasks-through-4-4
+
 # Runs the Playwright UI tests on every push and pull request.
 # Result: a green check (or red cross) next to the commit, and the HTML report as a downloadable artifact.
+ main
 name: UI tests
 
 on:
@@ -29,9 +32,17 @@ jobs:
         run: npx playwright test --project=ui --project=mobile
 
       - name: Upload HTML report
+ tasks-through-4-4
+        if: always()
+
         if: always()                      # also when tests failed
+ main
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
+< tasks-through-4-4
           retention-days: 14
+
+          retention-days: 14
+ main

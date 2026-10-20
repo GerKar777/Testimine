@@ -6,14 +6,46 @@ test.beforeEach(async ({ request }) => {
   await request.post('/reset');
 });
 
-// TC-01 · REQ-API-01 · GET /items returns the item list
-test('TC-01 GET /items returns 200 and an array of 2 items', async ({ request }) => {
-  const res = await request.get('/items');          // 1. send the request
-  expect(res.status()).toBe(200);                    // 2. check the status code
-  const body = await res.json();                     // 3. read the body as JSON
-  expect(Array.isArray(body)).toBe(true);            // 4. check the shape
-  expect(body.length).toBe(2);                       // 5. check the content
-});
+// TC-01 · REQ-API-01 · GET /items
+  test('TC-01 GET /items returns 200 and array of 2 items', async ({ request }) => {
+    const res = await request.get('/items');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body)).toBe(true);
+    expect(body).toHaveLength(2);
+  });
 
-// TODO: write TC-02 … TC-10 from your test-cases.md (project guide, chapter 4).
-// One test() per test case. Keep the TC-ID and REQ-ID in the comment above each test.
+  // TC-02 · REQ-API-02 · GET /items/1
+  test('TC-02 GET /items/1 returns 200 and the item', async ({ request }) => {
+    const res = await request.get('/items/1');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ id: 1, sku: 'A-1', qty: 5 });
+  });
+
+  // TC-03 · REQ-API-02 · GET /items/999 (Несуществующий ID)
+  test('TC-03 GET /items/999 returns 404 with error body', async ({ request }) => {
+    const res = await request.get('/items/999');
+    expect(res.status()).toBe(404);
+    expect(await res.json()).toEqual({ error: 'not found' });
+  });
+
+  // TC-04 · REQ-API-03 · POST /items с валидным телом
+  test('TC-04 POST /items with valid body returns 201 and new item', async ({ request }) => {
+    const res = await request.post('/items', {
+      data: { sku: 'C-3', qty: 10 }
+    });
+    expect(res.status()).toBe(201);
+    const body = await res.json();
+    expect(body).toEqual({ id: 3, sku: 'C-3', qty: 10 });
+  });
+
+  // TC-05 · REQ-API-03 · POST /items с qty = 0 (граничное значение)
+  test('TC-05 POST /items with qty 0 returns 201 (boundary)', async ({ request }) => {
+    const res = await request.post('/items', {
+      data: { sku: 'C-3', qty: 0 }
+    });
+    expect(res.status()).toBe(201);
+    const body = await res.json();
+    expect(body).toEqual({ id: 3, sku: 'C-3', qty: 0 });
+  });

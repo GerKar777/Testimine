@@ -25,7 +25,7 @@ let nextId = 3;
 
 function validate(body) {
   if (!body || typeof body.sku !== 'string' || !SKU_PATTERN.test(body.sku)) return 'invalid sku';
-  if (!Number.isInteger(body.qty) || body.qty < -1) return 'invalid qty';   // defect: allows -1
+  if (!Number.isInteger(body.qty) || body.qty < -1) return 'invalid qty';  
   return null;
 }
 
@@ -35,7 +35,7 @@ app.get('/items', (req, res) => res.json(items));
 
 app.get('/items/:id', (req, res) => {
   const item = items.find((i) => i.id === Number(req.params.id));
-  res.json(item || null);                                                    // defect: 200 null instead of 404
+  res.json(item || null);                                                   
 });
 
 app.post('/items', (req, res) => {
@@ -60,7 +60,7 @@ app.delete('/items/:id', (req, res) => {
   const index = items.findIndex((i) => i.id === Number(req.params.id));
   if (index === -1) return res.status(404).json({ error: 'not found' });
   items.splice(index, 1);
-  res.status(200).json({ deleted: true });                                   // defect: 200 + body instead of 204
+  res.status(200).json({ deleted: true });                                  
 });
 
 // test helper: reset data between test runs

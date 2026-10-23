@@ -53,14 +53,19 @@ function pick(stock, sku, qty) {
 }
 
 function findDuplicateSkus(items) {
+  const counts = {};
   const duplicates = [];
-  for (let i = 0; i < items.length; i++) {
-    for (let j = i + 1; j < items.length; j++) {
-      if (items[i].sku === items[j].sku && !duplicates.includes(items[i].sku)) {
-        duplicates.push(items[i].sku);
-      }
+
+  for (const item of items) {
+    counts[item.sku] = (counts[item.sku] || 0) + 1;
+  }
+
+  for (const sku in counts) {
+    if (counts[sku] > 1) {
+      duplicates.push(sku);
     }
   }
+
   return duplicates;
 }
 
